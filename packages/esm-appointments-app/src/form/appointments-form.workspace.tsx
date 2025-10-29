@@ -115,10 +115,14 @@ const AppointmentsForm: React.FC<AppointmentsFormProps & DefaultWorkspaceProps> 
     ? dayjs(new Date(appointment?.startDateTime)).format('hh:mm')
     : dayjs(new Date()).format('hh:mm');
 
+  // Determine the default duration in minutes:
+  // 1. If the appointment has both start and end times, use their difference.
+  // 2. Otherwise, fall back to the matching service's default duration (if available).
+  // 3. If neither is available, leave undefined (empty).
   const defaultDuration =
     appointment?.startDateTime && appointment?.endDateTime
       ? dayjs(appointment.endDateTime).diff(dayjs(appointment.startDateTime), 'minutes')
-      : undefined;
+      : (services?.find((service) => service.name === appointment?.service?.name)?.durationMins ?? undefined);
 
   // t('durationErrorMessage', 'Duration should be greater than zero')
   const appointmentsFormSchema = z
@@ -659,9 +663,7 @@ const AppointmentsForm: React.FC<AppointmentsFormProps & DefaultWorkspaceProps> 
                   />
                 </ResponsiveWrapper>
 
-                {!watch('isAllDayAppointment') && (
-                  <TimeAndDuration control={control} errors={errors} services={services} watch={watch} t={t} />
-                )}
+                {!watch('isAllDayAppointment') && <TimeAndDuration control={control} errors={errors} t={t} />}
 
                 <ResponsiveWrapper>
                   <Controller
@@ -777,9 +779,7 @@ const AppointmentsForm: React.FC<AppointmentsFormProps & DefaultWorkspaceProps> 
                   />
                 </ResponsiveWrapper>
 
-                {!watch('isAllDayAppointment') && (
-                  <TimeAndDuration control={control} services={services} watch={watch} t={t} errors={errors} />
-                )}
+                {!watch('isAllDayAppointment') && <TimeAndDuration control={control} t={t} errors={errors} />}
               </div>
             )}
           </div>
@@ -915,9 +915,7 @@ const AppointmentsForm: React.FC<AppointmentsFormProps & DefaultWorkspaceProps> 
   );
 };
 
-function TimeAndDuration({ t, watch, control, services, errors }) {
-  const defaultDuration = services?.find((service) => service.name === watch('selectedService'))?.durationMins || null;
-
+function TimeAndDuration({ t, control, errors }) {
   return (
     <>
       <ResponsiveWrapper>
